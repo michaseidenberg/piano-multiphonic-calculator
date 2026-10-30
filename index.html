@@ -228,6 +228,14 @@ th.btns { white-space: nowrap; text-align: right !important; }
 th.btns button + button { margin-left: 6px; }
 .hint { font-weight: 400; color: var(--muted); font-size: 0.8rem; }
 footer { color: var(--muted); font-size: 0.8rem; }
+/* kleine Download-Knöpfe an den Grafiken */
+button.dl { font: 600 0.75rem var(--font-body); color: var(--muted); background: var(--paper); border: 1px solid var(--rule);
+  border-radius: 4px; padding: 2px 8px; cursor: pointer; white-space: nowrap; }
+button.dl:hover { color: var(--ink); border-color: var(--muted); }
+.dlrow { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.dlbtns { flex-wrap: wrap; }
+.dlbtns select { width: auto; }
+.export code { font: 0.95em var(--font-num); }
 :root { --mech: #a3a9ad; --mech-dark: #5f666b; }
 .check { display: inline-flex; gap: 6px; align-items: center; margin-left: auto; color: var(--muted); }
 .audiostate { font-size: 0.85rem; color: var(--muted); }
@@ -387,6 +395,7 @@ button.play.take.active { background: var(--c); }
   input[type="checkbox"] { width: 22px; height: 22px; }
   button.play { min-height: 40px; }
   button.play.small, button.play.take { min-height: 36px; }
+  button.dl { min-height: 32px; }
   .controls td { padding-block: 3px; }
 }
 </style>
@@ -428,7 +437,8 @@ button.play.take.active { background: var(--c); }
       </div>
     </div>
     <div class="legend"><span class="hint">Tap a number k/n: flageolet (partial n and its multiples). Tap a ○ on the string: multiphonic of that node, taken into the active string. Long press: all strings.</span>
-      <label class="check"><input id="mech" type="checkbox"> Damper and hammer (approximate)</label></div>
+      <label class="check"><input id="mech" type="checkbox"> Damper and hammer (approximate)</label>
+      <button type="button" class="dl" data-dl="string" data-scope="shown" title="Download the graphic as SVG">⤓ SVG</button></div>
     <div id="ptsum" class="ptsum"></div>
     <div class="stringscroll">
       <div id="strwrap" class="strwrap">
@@ -465,6 +475,7 @@ button.play.take.active { background: var(--c); }
       <label for="catMax">Only up to partial <input id="catMax" type="text" inputmode="numeric" placeholder="all"></label>
       <label for="catSearch">With partials <input id="catSearch" type="text" inputmode="numeric" placeholder="e.g. 7 10"></label>
       <span id="catCount"></span>
+      <button type="button" class="dl" data-dl="catalogue" title="Download the catalogue as SVG">⤓ SVG</button>
     </div>
     <div id="catalog" class="tablewrap"></div>
     <p class="hint">Tap a row to take the node (string, octave, the two partials) into the active string. Strike plays the node with piano synthesis
@@ -538,12 +549,24 @@ C#1 125.5"></textarea>
       <span id="xmlStatus" class="hint"></span>
     </div>
     <textarea id="expXml" class="xmlbox" readonly hidden></textarea>
-    <h3 class="exph3">String graphic</h3>
-    <p class="hint">The graphic with all nodes up to “Nodes up to partial” (Settings) as it is shown: strings, touch points, free point, damper/hammer. Print colours on white, vector file in any size (Illustrator, Inkscape, Affinity, browser).</p>
-    <div class="exprow">
-      <button type="button" id="svgSave" class="play">Download .svg</button>
-      <span id="svgStatus" class="hint"></span>
+    <h3 class="exph3">Graphic downloads</h3>
+    <p class="hint">SVG in print colours on white, any size (Illustrator, Inkscape, Affinity, browser).
+      Names: string, sounding partials, touch point, e.g. <code>C1_4-7-11_at_3-11_partials.svg</code>.
+      String graphic: nodes up to “Nodes up to partial” (Settings), touch points, free point, damper/hammer.
+      Partials: all partials, the sounding ones in colour. Catalogue: as shown (sort, filters), with chords.
+      Several files come as .zip.</p>
+    <div class="exprow dlbtns">
+      <label for="dlScope">Strings</label>
+      <select id="dlScope"><option value="active">active string</option><option value="all">all strings</option></select>
     </div>
+    <div class="exprow dlbtns">
+      <button type="button" class="play" data-dl="string">String graphic</button>
+      <button type="button" class="play" data-dl="partials">Partials</button>
+      <button type="button" class="play" data-dl="audible">Audible</button>
+      <button type="button" class="play" data-dl="catalogue">Catalogue</button>
+      <button type="button" class="play copy" data-dl="zip">All as .zip</button>
+    </div>
+    <div class="exprow"><span id="svgStatus" class="hint"></span></div>
   </section>
 
   <footer>Calculation after <a href="https://www.casparjohanneswalter.de/research/piano_multiphonic_calculator">Caspar Johannes Walter</a>.
@@ -554,6 +577,7 @@ C#1 125.5"></textarea>
 <script src="js/glyphs.js"></script>
 <script src="js/notation.js"></script>
 <script src="js/stringview.js"></script>
+<script src="js/svgfile.js"></script>
 <script src="js/piano.js"></script>
 <script src="js/catalog.js"></script>
 <script src="js/vesikkala.js"></script>

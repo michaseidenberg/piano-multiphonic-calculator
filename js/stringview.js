@@ -299,7 +299,7 @@
     );
   }
 
-  var API = { standaloneSVG: standaloneSVG, POINTER_BOTTOM: BASE + 40, stringSVG: stringSVG, nodes: nodes, DAMPER: DAMPER, HAMMER: HAMMER, x: x, posFromX: posFromX, pointerMark: pointerMark, W: W };
+  var API = { PRINT: PRINT, standaloneSVG: standaloneSVG, POINTER_BOTTOM: BASE + 40, stringSVG: stringSVG, nodes: nodes, DAMPER: DAMPER, HAMMER: HAMMER, x: x, posFromX: posFromX, pointerMark: pointerMark, W: W };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   else root.PMString = API;
 })(this);

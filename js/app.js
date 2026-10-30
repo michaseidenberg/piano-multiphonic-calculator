@@ -424,18 +424,9 @@
       "<tr><th>Distance from agraffe</th><td>" + cm(v.cm) + gr(v.grooves) + "</td><td>" + cm(v.cmMirror) + gr(v.groovesMirror) + "</td></tr>" +
       "</table><p class=\"hint\">" + lenText + " Grip interval = pitch of the stopped string (Vesikkala shows it in Appendix 3 but advises against it). Grooves ≈ 6.5 per cm, only a rough guide.</p></details>";
 
-    var spectrum = PMNotation.spectrumSVG(
-      r.rows.map(function (row) {
-        return { cents: row.cents, color: row.audible ? COLORS[i] : "var(--muted)", label: String(row.partial) };
-      })
-    );
+    var spectrum = spectrumFor(i);
     // klingende Teiltöne als Akkord: rechts daneben oder, wenn der Platz fehlt, darunter
-    var chord = PMNotation.chordSVG(
-      r.audibleRows.map(function (row) {
-        return { cents: row.cents, color: COLORS[i] };
-      }),
-      state.filter ? "Audible" : "Chord"
-    );
+    var chord = chordFor(i);
     var allOn = allPlaying(i, r);
     var struck = PMAudio.isPlaying(strikeKey(i));
     $("touchpoint").innerHTML =
@@ -445,6 +436,8 @@
       '<span class="vline" title="' + esc(PMVesikkala.line(str.tone, str.octave, r.result, partials)) + '">' + esc(line) + "</span></div>" +
       grip +
       '<div class="specwrap"><div class="specscroll">' + spectrum + "</div>" + chord + "</div>" +
+      '<div class="dlrow"><button type="button" class="dl" data-dl="partials" title="Download the partials as SVG">⤓ Partials</button>' +
+      (chord ? '<button type="button" class="dl" data-dl="audible" title="Download the chord as SVG">⤓ ' + chordLabel() + "</button>" : "") + "</div>" +
       '<div class="tpbtns">' +
       '<button type="button" class="play all' + (allOn ? " on" : "") + '" data-all="' + i + '"' + (r.audibleRows.length ? "" : " disabled") + ">" + (allOn ? "Stop All" : "Play All") + "</button>" +
       '<button type="button" class="play strike' + (struck ? " on" : "") + '" data-strike="' + i + '"' + (r.audibleRows.length ? "" : " disabled") + ">" + (struck ? "Stop" : "Strike") + "</button>" +
@@ -452,6 +445,29 @@
       "</div>";
     strikeBothLabel();
     testLabels(allOn, struck, r.audibleRows.length > 0);
+  }
+
+  // Doppelsystem aller Partialtöne der Saite i: klingende in ihrer Farbe, die anderen grau
+  function spectrumFor(i) {
+    return PMNotation.spectrumSVG(
+      results[i].rows.map(function (row) {
+        return { cents: row.cents, color: row.audible ? COLORS[i] : "var(--muted)", label: String(row.partial) };
+      })
+    );
+  }
+
+  function chordLabel() {
+    return state.filter ? "Audible" : "Chord";
+  }
+
+  // die klingenden Teiltöne der Saite i als Akkord ("" ohne Töne)
+  function chordFor(i) {
+    return PMNotation.chordSVG(
+      results[i].audibleRows.map(function (row) {
+        return { cents: row.cents, color: COLORS[i] };
+      }),
+      chordLabel()
+    );
   }
 
   // Testknöpfe in den Settings: gehaltener Klang (wie Play All) und Anschlag der aktiven Saite
@@ -637,13 +653,14 @@
 
     var cat = PMCatalog.forString(state.concertPitch, str.tone, str.octave, c.nMax);
     $("catFreq").textContent = cat.freq.toFixed(2);
-    catShown = { freq: cat.freq, tone: str.tone, octave: str.octave, entries: {} };
+    catShown = { freq: cat.freq, tone: str.tone, octave: str.octave, entries: {}, list: [] };
     var maxPartial = parseNum(c.maxPartial);
     var entries = PMCatalog.sort(
       PMCatalog.filter(cat.entries, { maxPartial: maxPartial > 0 ? maxPartial : 0, search: c.search }),
       c.sort
     );
     $("catCount").textContent = entries.length + " of " + cat.entries.length + " nodes";
+    catShown.list = entries;
 
     if (!entries.length) {
       $("catalog").innerHTML = '<p class="empty">No node matches.</p>';
@@ -746,7 +763,7 @@
   }
 
   // Zuletzt gezeichnete Katalogzeilen (für Strike): { freq, entries: { "k/n": Eintrag } }
-  var catShown = { freq: 0, tone: 0, octave: 0, entries: {} };
+  var catShown = { freq: 0, tone: 0, octave: 0, entries: {}, list: [] };
 
   function catStrikeKey(e) {
     return "cat:" + e.k + "/" + e.n;
@@ -986,12 +1003,16 @@
     save();
   }
 
-  function stringGraphic() {
+  function stringGraphic(onlyActive) {
     return PMString.stringSVG(
       state.nMax,
-      results.map(function (r, i) {
-        return { color: COLORS[i], result: r.result, fractions: r.fractions, active: i === state.active };
-      }),
+      results
+        .map(function (r, i) {
+          return { color: COLORS[i], result: r.result, fractions: r.fractions, active: i === state.active };
+        })
+        .filter(function (s) {
+          return !onlyActive || s.active;
+        }),
       { mechanics: state.mechanics, pointer: state.pointer, multiphonics: multiphonicNodes() }
     );
   }
@@ -1343,6 +1364,11 @@
       takeFromCatalog(parseInt(tr.dataset.n, 10), parseInt(tr.dataset.b, 10), tr);
       return;
     }
+    var dl = e.target.closest("button[data-dl]");
+    if (dl) {
+      download(dl.dataset.dl, dl.dataset.scope);
+      return;
+    }
     var b = e.target.closest("button[data-play], button[data-all], button[data-strike], button[data-copy], button[data-ptset], button[data-pttake], button[data-ptplay], button[data-ptclear], button[data-catstrike], button[data-chip], button[data-addstring], #strikeBoth");
     if (!b) return;
     if (b.dataset.chip != null) {
@@ -1484,16 +1510,14 @@
       if (e.key === "Escape") showOverlay(null, false);
     });
     $("xmlSave").addEventListener("click", saveMusicXML);
-    $("svgSave").addEventListener("click", saveSVG);
   }
 
   /*
    * MusicXML speichern. In der claude.ai-Seite über die Fähigkeit „downloads“ (erlaubt keine
    * Endung .musicxml, darum .musicxml.txt – vor dem Öffnen umbenennen); lokal (index.html) als
-   * normaler Download. Die Saitengrafik als .svg (Endung dort erlaubt).
+   * normaler Download. Grafiken als .svg bzw. .zip (download()).
    */
   var XML_NAME = "piano-multiphonics.musicxml";
-  var SVG_NAME = "piano-multiphonics-string.svg";
 
   function xmlStatus(t) {
     $("xmlStatus").textContent = t;
@@ -1507,8 +1531,70 @@
     saveFile($("expXml").value, XML_NAME, XML_NAME + ".txt", "application/vnd.recordare.musicxml+xml", xmlStatus, " – remove “.txt” before opening.", " Use Copy XML.");
   }
 
-  function saveSVG() {
-    saveFile(PMString.standaloneSVG(stringGraphic()), SVG_NAME, SVG_NAME, "image/svg+xml", svgStatus, ".", "");
+  /*
+   * Grafiken herunterladen (Erweiterung). what = string | partials | audible | catalogue | zip;
+   * scope = active | all | shown (Saitengrafik wie angezeigt). Ohne scope gilt die Wahl
+   * „Strings“ im Export. Dateinamen <Saite>_<klingende Teiltöne>_at_<k-n>_<Art>.svg; mehrere
+   * Dateien kommen als .zip.
+   */
+  function download(what, scope) {
+    scope = scope || $("dlScope").value;
+    var idx = scope === "active" ? [state.active] : state.strings.map(function (_, i) {
+      return i;
+    });
+    var base = idx.map(dlName).join("+");
+    if (base.length > 120) base = idx.length + "-strings";
+    var files = [];
+    if (what === "string" || what === "zip") {
+      files.push({ name: base + "_string.svg", data: PMString.standaloneSVG(stringGraphic(scope === "active")) });
+    }
+    idx.forEach(function (i) {
+      if (!results[i].rows.length) return;
+      if (what === "partials" || what === "zip") files.push({ name: dlName(i) + "_partials.svg", data: PMSvgFile.notationFile(spectrumFor(i)) });
+      var chord = chordFor(i);
+      if (chord && (what === "audible" || what === "zip")) files.push({ name: dlName(i) + "_" + chordLabel().toLowerCase() + ".svg", data: PMSvgFile.notationFile(chord) });
+    });
+    if ((what === "catalogue" || what === "zip") && catShown.list.length) files.push(catalogueFile());
+    if (!files.length) return svgStatus("Nothing to download.");
+    if (files.length === 1 && what !== "zip") return saveFile(files[0].data, files[0].name, files[0].name, "image/svg+xml", svgStatus, ".", "");
+    var name = base + (what === "zip" ? "" : "_" + what) + ".zip";
+    saveFile(PMSvgFile.zip(files), name, name, "application/zip", svgStatus, ".", "");
+  }
+
+  // <Saite>_<klingende Teiltöne>_at_<k-n> der Saite i
+  function dlName(i) {
+    var r = results[i];
+    var s = state.strings[i];
+    var name = PMVesikkala.fundamentName(s.tone, s.octave);
+    if (r.result == null) return PMSvgFile.baseName(name);
+    var last = r.fractions[r.fractions.length - 1];
+    var g = PM.gcd(last.numerator, last.denominator) || 1;
+    var partials = r.audibleRows.map(function (row) {
+      return row.partial;
+    });
+    return PMSvgFile.baseName(name, partials, last.numerator / g, last.denominator / g);
+  }
+
+  // Katalog wie angezeigt (Sortierung, Filter), je Zeile der Akkord, den Strike spielt
+  function catalogueFile() {
+    var name = PMVesikkala.fundamentName(catShown.tone, catShown.octave);
+    var title = "Catalogue · " + name + " · " + catShown.freq.toFixed(2) + " Hz · nodes up to partial " + state.catalog.nMax +
+      (state.filter ? " · chords: audible partials" : "");
+    var rows = catShown.list.map(function (e) {
+      var shown = e.rows.slice(e.rows.length - e.shown.length);
+      return {
+        node: e.k + "/" + e.n,
+        percent: e.percent.toFixed(1) + " %",
+        partials: (e.partials.length > e.shown.length ? "…" : "") + PMCatalog.groupText(e.shown),
+        notes: shown
+          .map(function (r) {
+            return PM.noteText(r.cents);
+          })
+          .join(" · "),
+        chord: catChord(e),
+      };
+    });
+    return { name: PMSvgFile.baseName(name) + "_catalogue.svg", data: PMSvgFile.catalogueFile(title, rows) };
   }
 
   // name = Dateiname lokal, hostName = in der claude.ai-Seite
