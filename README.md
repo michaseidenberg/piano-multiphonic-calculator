@@ -7,10 +7,8 @@ Published with kind permission of [Caspar Johannes Walter](https://www.casparjoh
 
 **Open the app:** <https://michaseidenberg.github.io/piano-multiphonic-calculator/>
 
-Walter’s original remains the tool for *finding* multiphonics: it computes them itself, reaches
-any point in any complexity and finds the point for two given partials. This version adds the
-string graphic, notation, sound and Vesikkala’s catalogue and playing indications. The two
-complement each other.
+The calculation of the touch point from two partials is Walter’s. This version adds the string
+graphic, notation, sound and Vesikkala’s catalogue and playing indications.
 
 ## Features
 
