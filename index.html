@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Piano Multiphonic Calculator</title>
+<style>
+/* Layout: Werkzeugleiste oben, Saitengrafik über die volle Breite, darunter zwei Spalten
+   (One rot, Two blau) – auf schmalen Bildschirmen untereinander. */
+:root {
+  --bg: #f6f7f5;
+  --paper: #ffffff;
+  --ink: #1d2124;
+  --muted: #5d666c;
+  --rule: #d9ddd8;
+  --one: #c8322b;
+  --two: #1f5fbf;
+  --bad: #c8322b;
+  --sc2: #2a8a3e; --sc3: #b87300; --sc4: #7a4cc2; --sc5: #0f8a8f; --sc6: #c23a87;
+  --sc7: #8a5a2b; --sc8: #66760f; --sc9: #4a5d7a;
+  --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-num: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15181a; --paper: #1c2023; --ink: #e6e9e7; --muted: #9aa3a8; --rule: #343a3e;
+    --one: #ff6b5e; --two: #6ea6ff; --bad: #ff6b5e; color-scheme: dark;
+    --sc2: #5cc46e; --sc3: #f0a830; --sc4: #b08cff; --sc5: #3fc7cc; --sc6: #ff7ac0;
+    --sc7: #d29a64; --sc8: #b5c84a; --sc9: #9fb3d1; --on-c: #15181a;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15181a; --paper: #1c2023; --ink: #e6e9e7; --muted: #9aa3a8; --rule: #343a3e;
+  --one: #ff6b5e; --two: #6ea6ff; --bad: #ff6b5e; color-scheme: dark;
+    --sc2: #5cc46e; --sc3: #f0a830; --sc4: #b08cff; --sc5: #3fc7cc; --sc6: #ff7ac0;
+    --sc7: #d29a64; --sc8: #b5c84a; --sc9: #9fb3d1; --on-c: #15181a;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font: 15px/1.45 var(--font-body);
+  padding-inline: max(16px, env(safe-area-inset-left, 0px));
+  padding-block: 20px 40px;
+}
+main { max-width: 1180px; margin: 0 auto; display: grid; gap: 22px; }
+header h1 {
+  font: 600 1.7rem/1.15 var(--font-display); margin: 0; text-wrap: balance;
+}
+header p { margin: 4px 0 0; color: var(--muted); font-size: 0.9rem; }
+header a { color: inherit; }
+header .cite { margin-top: 2px; font-size: 0.8rem; color: var(--muted); }
+header .cite summary { cursor: pointer; width: max-content; }
+header .cite p { margin: 4px 0 0; padding-left: 1.6em; text-indent: -1.6em; font-size: 0.8rem; overflow-wrap: anywhere; }
+
+.panel { background: var(--paper); border: 1px solid var(--rule); border-radius: 6px; padding: 14px 16px; min-width: 0; }
+
+.controls { display: flex; flex-wrap: wrap; gap: 18px 36px; align-items: flex-start; }
+.controls table { border-collapse: collapse; }
+.controls th { text-align: left; font-weight: 500; color: var(--muted); padding: 5px 12px 5px 0; font-size: 0.85rem; letter-spacing: 0.02em; }
+.controls td { padding: 4px 10px 4px 0; }
+.controls .colhead { font-weight: 700; font-size: 0.95rem; color: var(--ink); }
+.c0 { color: var(--one) !important; } .c1 { color: var(--two) !important; }
+:root { --sc0: var(--one); --sc1: var(--two); --on-c: #fff; }
+
+/* Saitenleiste: je Saite ein Chip in ihrer Farbe, der aktive gefüllt */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+button.chip {
+  font: 600 0.88rem var(--font-num); border: 1.5px solid var(--c); color: var(--c); background: var(--paper);
+  border-radius: 999px; padding: 4px 12px; cursor: pointer; white-space: nowrap; min-height: 32px;
+}
+button.chip::before { content: "●"; margin-right: 6px; }
+button.chip.active { background: var(--c); color: var(--on-c); }
+button.chip.add { --c: var(--muted); border-style: dashed; font-family: var(--font-body); font-weight: 500; }
+button.chip.add::before { content: none; }
+button.chip:disabled { opacity: 0.4; cursor: default; }
+.strbar { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; margin: 2px 0 6px; }
+.strbar .chips { gap: 6px; }
+.strbar button.chip { font-size: 0.8rem; padding: 2px 9px; min-height: 28px; }
+.strinputs { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 0.9rem; color: var(--muted); }
+.strinputs select { width: 4.4em; }
+.strinputs input[type="number"] { width: 3.4em; }
+button.chipx { border: 1px solid var(--rule); background: var(--paper); color: var(--muted); border-radius: 999px; width: 28px; height: 28px; font-size: 1rem; line-height: 1; cursor: pointer; padding: 0; }
+button.chipx:disabled { opacity: 0.35; cursor: default; }
+.tphead { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline; font: 600 1rem var(--font-display); margin: 10px 0 4px; border-top: 1px solid var(--rule); padding-top: 10px; }
+.tpnode { font: 400 0.85rem var(--font-body); color: var(--muted); display: inline-flex; gap: 4px; align-items: baseline; }
+.tpnode input[type="text"] { width: 3.4em; }
+
+/* Settings als Overlay, Knopf immer erreichbar (fest oben rechts) */
+.fab { position: fixed; top: max(10px, env(safe-area-inset-top, 0px)); right: max(12px, env(safe-area-inset-right, 0px)); z-index: 18; display: flex; gap: 8px; }
+.fabbtn { width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--ink); color: var(--paper); cursor: pointer; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px color-mix(in srgb, var(--ink) 25%, transparent); }
+.fabbtn.gear { font-size: 1.6rem; line-height: 1; }
+.exph3 { font: 600 1rem var(--font-display); margin: 18px 0 2px; }
+.xmlbox { width: 100%; min-height: 6em; font: 12px var(--font-num); margin-top: 6px; }
+.backdrop { position: fixed; inset: 0; z-index: 19; background: color-mix(in srgb, #000 30%, transparent); }
+.panel.overlay { position: fixed; top: 0; right: 0; bottom: 0; z-index: 20; width: min(560px, 100vw); overflow-y: auto; overscroll-behavior: contain;
+  border-radius: 0; border-width: 0 0 0 1px; padding: max(14px, env(safe-area-inset-top, 0px)) 18px 30px; box-shadow: -4px 0 18px color-mix(in srgb, #000 20%, transparent); }
+.ovhead { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.ovhead h2 { font: 600 1.15rem var(--font-display); margin: 0; }
+header { padding-right: 110px; }
+.strinputs label { display: inline-flex; gap: 6px; align-items: center; white-space: nowrap; }
+.strinputs .freq { color: var(--ink); }
+
+/* Touch point: Saite, Fingerposition, klingende Teiltöne, Notation, Knöpfe */
+.touchpoint { }
+.touchpoint h3 { font: 600 1rem var(--font-display); margin: 0 0 4px; }
+.tpstring { font-size: 1.1rem; }
+.tpstring b, .tpline b { font-family: var(--font-num); }
+.tpline { margin-top: 2px; }
+.tpline .vline { font-family: var(--font-num); color: var(--muted); white-space: nowrap; }
+.tpbtns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.touchpoint .specwrap { margin-top: 8px; }
+.touchpoint details { margin-top: 4px; }
+
+/* Knoten k/n in der Saitengrafik sind Knöpfe */
+#string .nodebtn { cursor: pointer; }
+#string .nodebtn rect { fill: transparent; }
+#string .nodebtn:hover rect, #string .nodebtn.hit rect { fill: currentColor; fill-opacity: 0.12; }
+#string .nodebtn.long rect { fill-opacity: 0.25; }
+#string .multibtn { cursor: pointer; }
+#string .multibtn rect { fill: transparent; }
+#string .multibtn circle { fill: var(--paper); }
+#string .multibtn:hover circle, #string .multibtn.hit circle { fill: currentColor; }
+#string svg { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+
+/* zuklappbare Bereiche */
+details.panel > summary { cursor: pointer; list-style: none; display: flex; align-items: baseline; gap: 8px; }
+details.panel > summary::-webkit-details-marker { display: none; }
+details.panel > summary::before { content: "▸"; color: var(--ink); width: 0.9em; flex: none; font-size: 1.1em; }
+details.panel[open] > summary::before { content: "▾"; }
+/* Klappknopf rechts: zeigt, dass ein Tippen auf die Kopfzeile den Bereich zu- bzw. aufklappt */
+details.panel > summary::after {
+  content: "Show"; margin-left: auto; flex: none; align-self: center;
+  font: 600 0.75rem var(--font-body); color: var(--muted);
+  border: 1px solid var(--rule); border-radius: 4px; padding: 2px 8px;
+}
+details.panel[open] > summary::after { content: "Hide"; }
+details.panel > summary:hover::after { color: var(--ink); border-color: var(--muted); }
+details.panel > summary h2 { font: 600 1.05rem var(--font-display); margin: 0; }
+details.panel[open] > summary { margin-bottom: 8px; }
+details.panel > summary .hint { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+details.panel[open] > summary .hint { white-space: normal; }
+.touchpoint { display: flex; flex-direction: column; align-items: stretch; }
+.touchpoint > * { min-width: 0; }
+
+input[type="text"], input[type="number"], select {
+  font: 16px var(--font-num); color: var(--ink); background: var(--bg);
+  border: 1px solid var(--rule); border-radius: 4px; padding: 4px 6px; width: 5.2em;
+}
+select { font-family: var(--font-body); width: 5.2em; }
+input.bad { border-color: var(--bad); color: var(--bad); }
+input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px solid var(--two); outline-offset: 1px; }
+input[type="range"] { width: 11em; vertical-align: middle; accent-color: var(--ink); }
+.num, .freq { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+.err { color: var(--bad); font-size: 0.85rem; }
+.touch { font-size: 0.95rem; }
+
+.stringpanel h2 { font: 600 1.05rem var(--font-display); margin: 0 0 6px; }
+.stringpanel .legend { display: flex; flex-wrap: wrap; gap: 4px 20px; font-size: 0.9rem; color: var(--muted); }
+.stringscroll { overflow-x: auto; }
+.strwrap { min-width: 640px; position: relative; }
+#string { color: var(--ink); }
+#string svg { width: 100%; height: auto; display: block; font-family: var(--font-body); }
+
+/* Freier Zeiger: Leiste unter dem Dreieck, wandert beim Ziehen mit; an ihr lässt sich ziehen */
+.ptstrip { position: relative; height: 44px; touch-action: pan-y; cursor: ew-resize; }
+/* mit Zeiger: Leiste direkt unter dem Dreieck (Höhe in app.js berechnet), der Streifen bleibt schmal */
+.ptstrip.on { position: static; height: 42px; }
+.ptbar { position: absolute; top: 2px; z-index: 1; transform: translateX(-50%); display: flex; gap: 4px; align-items: center;
+  background: var(--paper); border: 1px solid var(--rule); border-radius: 6px; padding: 3px; white-space: nowrap;
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--ink) 15%, transparent); }
+.ptbar::before { content: ""; position: absolute; left: var(--tip, 50%); top: -6px; width: 10px; height: 10px; margin-left: -5px;
+  background: var(--paper); border-left: 1px solid var(--rule); border-top: 1px solid var(--rule); transform: rotate(45deg); }
+.ptbar.left { transform: none; } .ptbar.right { transform: translateX(-100%); }
+.ptbar button.play { min-width: 0; padding: 4px 9px; font-size: 0.8rem; }
+.ptbar .clear { background: transparent; color: var(--muted); border: 0; font-size: 1.1rem; line-height: 1; padding: 2px 6px; cursor: pointer; }
+.ptstrip:not(.on) { height: 10px; }
+/* Free point über der Grafik: feste Höhe, damit die Saite beim Ziehen nicht springt */
+.ptsum { height: 124px; margin-top: 6px; display: flex; gap: 12px; align-items: center; overflow: hidden;
+  font-size: 0.9rem; color: var(--muted); border-bottom: 1px solid var(--rule); }
+.ptsum b { color: var(--ink); font-family: var(--font-num); }
+.ptsum .ptchord { color: var(--ink); flex: none; align-self: stretch; }
+.ptsum .ptchord svg { display: block; height: 100%; width: auto; }
+.ptsum .pttext { flex: 1 1 auto; min-width: 0; }
+.ptsum .ptline { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ptsum .hint { white-space: normal; }
+.pointer { font-size: 0.9rem; color: var(--muted); }
+.pointer b { color: var(--ink); font-family: var(--font-num); }
+.pointer details { margin-top: 4px; }
+.pointer summary { cursor: pointer; }
+.pointer .pthead { margin: 6px 0; }
+
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); gap: 22px; }
+.tablewrap, .specscroll { overflow-x: auto; }
+/* Partials der aktiven Saite: Spaltenköpfe bleiben beim Bildlauf oben. overflow: clip statt auto,
+   sonst wäre die Hülle der Bezug für sticky (die Tabelle scrollt ohnehin nicht seitlich) */
+#result .tablewrap, #catalog.tablewrap { overflow-x: clip; }
+#result table.rows thead th, #catalog table.rows thead th { position: sticky; top: 0; z-index: 1; background: var(--paper); }
+.specwrap { display: flex; flex-wrap: wrap; align-items: flex-start; column-gap: 12px; row-gap: 8px; }
+.specscroll { max-width: 100%; }
+table.rows { border-collapse: collapse; width: 100%; }
+table.rows th { font-size: 0.78rem; font-weight: 600; color: var(--muted); text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--rule); letter-spacing: 0.02em; }
+table.rows td { padding: 2px 8px; border-bottom: 1px solid var(--rule); vertical-align: middle; }
+table.rows tr:last-child td { border-bottom: 0; }
+td.frac { font-family: var(--font-num); text-align: center; width: 3.2em; }
+td.frac span { display: block; line-height: 1.2; }
+td.frac span:first-child { border-bottom: 1.5px solid currentColor; }
+td.num { text-align: right; }
+td.note { font-family: var(--font-num); white-space: nowrap; }
+td.nota { color: var(--ink); padding: 0 4px; }
+td.nota svg { display: block; }
+.sub { font: 600 0.8rem var(--font-body); color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; margin: 16px 0 4px; }
+.specwrap { color: var(--ink); }
+.specwrap svg { display: block; font-family: var(--font-body); }
+.empty { color: var(--muted); margin: 6px 0; }
+
+button.play {
+  font: 600 0.85rem var(--font-body); border: 0; border-radius: 4px; padding: 7px 12px; min-width: 4.4em;
+  background: var(--two); color: #fff; cursor: pointer;
+}
+button.play.on { background: var(--one); }
+button.play.all { min-width: 5.6em; }
+button.play.strike { background: var(--ink); color: var(--paper); }
+button.play.strike.on { background: var(--one); color: #fff; }
+button.play:disabled { opacity: 0.4; cursor: default; }
+th.btns { white-space: nowrap; text-align: right !important; }
+th.btns button + button { margin-left: 6px; }
+.hint { font-weight: 400; color: var(--muted); font-size: 0.8rem; }
+footer { color: var(--muted); font-size: 0.8rem; }
+:root { --mech: #a3a9ad; --mech-dark: #5f666b; }
+.check { display: inline-flex; gap: 6px; align-items: center; margin-left: auto; color: var(--muted); }
+.audiostate { font-size: 0.85rem; color: var(--muted); }
+.audiostate.on { color: var(--ink); }
+.exphead { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; margin-bottom: 10px; }
+.exphead select { width: auto; }
+.exprow { display: flex; gap: 8px; align-items: center; margin-top: 6px; }
+.exprow input { flex: 1; min-width: 0; width: auto; font-size: 14px; }
+.explabel { width: 2.6em; font-weight: 700; font-size: 0.9rem; }
+button.play.copy { background: var(--ink); color: var(--paper); }
+button.play.copy.done { background: var(--two); color: #fff; }
+@media (prefers-reduced-motion: no-preference) { button.play { transition: background 0.15s; } }
+/* Arbeitsbereich: links Saite und Tabelle, ab 1200 px rechts der Katalog (eigener Bildlauf) */
+.workspace, .workspace .left { display: grid; gap: 22px; min-width: 0; align-items: start; }
+@media (min-width: 1200px) {
+  main { max-width: 1560px; }
+  .workspace { grid-template-columns: minmax(0, 1fr) clamp(330px, 26vw, 420px); }
+  /* zugeklappter Katalog gibt die volle Breite frei (unter die Saite) */
+  .workspace:has(> .catalog:not([open])) { grid-template-columns: minmax(0, 1fr); }
+  .workspace .catalog[open] { position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow-y: auto; overscroll-behavior: contain; }
+}
+.catalog summary .hint { font-weight: 400; }
+#catalog tr[data-take] { cursor: pointer; }
+#catalog tr[data-take]:hover td { background: color-mix(in srgb, var(--ink) 5%, transparent); }
+#catalog tr.sel[data-take]:hover td { background: color-mix(in srgb, var(--c) 14%, transparent); }
+table.rows td.chord { padding: 2px 4px; color: var(--ink); }
+table.rows td.chord svg { display: block; height: 120px; width: auto; }
+.check.filt { margin-left: 0; font-size: 0.85rem; }
+#string svg { touch-action: pan-y; cursor: crosshair; }
+@media (max-width: 600px), (pointer: coarse) {
+  .ptbar button.play { min-height: 36px; padding-inline: 11px; }
+  .ptbar .clear { min-height: 36px; min-width: 36px; }
+  .ptstrip { height: 50px; }
+  .ptstrip.on { height: 50px; }
+}
+tr.damped td { color: var(--muted); }
+tr.damped td.nota { opacity: 0.4; }
+tr.damped td.frac span:first-child { border-color: var(--muted); }
+td.acc { font-family: var(--font-num); text-align: right; white-space: nowrap; }
+.bar { display: inline-block; width: 4.5em; height: 0.55em; background: var(--rule); border-radius: 2px; vertical-align: middle; margin-right: 6px; overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--ink); }
+.pthead { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; font-size: 0.9rem; color: var(--muted); }
+.pthead b { color: var(--ink); }
+.pthead select { width: auto; }
+.pthead label { display: inline-flex; gap: 6px; align-items: center; }
+button.play.small { padding: 4px 8px; font-size: 0.78rem; min-width: 0; background: var(--ink); color: var(--paper); }
+button.play.small.on { background: var(--one); color: #fff; }
+#testHold, #testStrike { margin-left: 8px; vertical-align: middle; }
+.ptrow { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; margin: 8px 0 6px; }
+.ptrow .take0 { background: var(--one); } .ptrow .take1 { background: var(--two); }
+table.rows.pt { width: auto; min-width: 0; }
+.cathead { display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: center; margin-bottom: 10px; font-size: 0.9rem; color: var(--muted); }
+/* Katalog-Einstellungen bleiben beim Bildlauf oben stehen (nicht auf dem iPhone, dort zu hoch) */
+@media (min-width: 600px) {
+  .catalog .cathead { position: sticky; top: 0; z-index: 2; background: var(--paper);
+    margin-inline: -16px; padding: 8px 110px 8px 16px; border-bottom: 1px solid var(--rule); }
+}
+/* neben der Saite scrollt der Katalog selbst: Kopf bis an den Rand, rechts kein Platz für ⤓ ⚙ nötig */
+@media (min-width: 1200px) {
+  .workspace .catalog[open] .cathead { top: -14px; padding-right: 16px; }
+  .workspace .catalog[open] #catalog table.rows thead th { top: calc(var(--cathead-h, 0px) - 14px); }
+}
+/* Katalog: Spaltenköpfe direkt unter den fixierten Einstellungen (Höhe misst app.js) */
+@media (min-width: 600px) {
+  #catalog table.rows thead th { top: var(--cathead-h, 0px); }
+}
+.cathead label { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; white-space: nowrap; }
+.cathead select { width: auto; }
+.cathead input[type="number"] { width: 3.6em; }
+.cathead input[type="text"] { width: 5.6em; }
+.cathead input[type="range"] { width: 8em; }
+.cathead .num { color: var(--ink); }
+table.rows td.pct { text-align: right; font-family: var(--font-num); white-space: nowrap; }
+table.rows td.grp { font-family: var(--font-num); white-space: nowrap; }
+table.rows td.grp .more { color: var(--muted); font-size: 0.8rem; margin-left: 4px; }
+table.rows td.notes { font-family: var(--font-num); white-space: nowrap; font-size: 0.9rem; }
+table.rows td.notes span + span::before { content: " · "; color: var(--muted); }
+table.rows td.mark { width: 1.2em; padding: 2px 0 2px 6px; font-size: 0.75rem; white-space: nowrap; }
+table.rows td.take { white-space: nowrap; text-align: right; }
+table.rows td.take button + button { margin-left: 4px; }
+button.play.take { min-width: 3.4em; padding: 5px 8px; font-size: 0.8rem; }
+button.play.take0 { background: var(--one); }
+button.play.take1 { background: var(--two); }
+details.grip { margin-top: 4px; font-size: 0.9rem; color: var(--muted); }
+details.grip summary { cursor: pointer; }
+.grip table { border-collapse: collapse; margin-top: 4px; }
+.grip th { text-align: left; font-weight: 500; color: var(--muted); padding: 2px 12px 2px 0; font-size: 0.85rem; }
+.grip td { padding: 2px 12px 2px 0; color: var(--ink); font-family: var(--font-num); white-space: nowrap; }
+.grip .approx { color: var(--muted); }
+.models select { width: auto; max-width: 14em; }
+.modelform { margin-top: 6px; display: grid; gap: 6px; max-width: 30em; }
+.modelform input[type="text"] { width: 100%; }
+.modelform textarea { font: 14px var(--font-num); color: var(--ink); background: var(--bg); border: 1px solid var(--rule); border-radius: 4px; padding: 4px 6px; width: 100%; min-height: 5.5em; }
+.modelform .row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.modelform .err { min-height: 1.2em; }
+tr.sel td { background: color-mix(in srgb, var(--c) 9%, transparent); }
+th .short { display: none; }
+button.play.take.active { background: var(--c); }
+[hidden] { display: none !important; }
+
+/* Schmale Panels (iPhone, Katalog neben der Saite): Katalog ohne die entbehrlichen Spalten.
+   Gemessen wird die Breite des Panels (@container). */
+.tablepanel, .catalog { container-type: inline-size; }
+@container (max-width: 980px) {
+  .catalog .hi, .catalog .hz { display: none; }
+  table.rows td.notes { white-space: normal; }
+  table.rows td.notes span { display: inline-block; white-space: nowrap; }
+}
+@container (max-width: 640px) {
+  .catalog .notes, .catalog .mark, .catalog .unit { display: none; }
+  .catalog table.rows td.chord svg { height: 88px; }
+  .catalog summary .hint { display: none; }
+  .catalog table.rows { font-size: 0.88rem; }
+  .catalog table.rows th, .catalog table.rows td { padding-inline: 3px; }
+  .catalog td.take button + button { margin-left: 3px; }
+  .catalog td.frac { width: auto; }
+  .catalog table.rows td.grp { font-size: 0.8rem; white-space: normal; }
+  .catalog button.play.take { min-width: 0; padding: 5px 6px; font-size: 0.75rem; }
+}
+
+/* iPhone (unter 600 px): Einzelnoten-SVG weglassen (das Doppelsystem „Partials“ zeigt sie),
+   knappere Ränder */
+@media (max-width: 600px) {
+  .ptsum { height: 108px; font-size: 0.85rem; gap: 8px; }
+  body { padding-block: 12px 32px; }
+  main { gap: 14px; }
+  header h1 { font-size: 1.4rem; }
+  .panel { padding: 12px 10px; }
+  .controls { gap: 14px; }
+  .controls th { padding-right: 8px; }
+  .controls input[type="range"] { width: 8.5em; }
+  .controls td.num { white-space: nowrap; }
+  td.nota, th.nota { display: none; }
+  table.rows th, table.rows td { padding-inline: 6px; }
+  .tablepanel table.rows { font-size: 0.88rem; }
+  .tablepanel td.frac { width: auto; }
+  .tablepanel td.note { white-space: normal; }
+  .tablepanel th .long { display: none; }
+  .tablepanel th .short { display: inline; }
+  .tablepanel table.rows button.play { min-width: 3.6em; padding-inline: 8px; }
+  .tpstring { font-size: 1rem; }
+  /* Play/Strike gleich unter den Angaben, die Notation darunter */
+  .tpbtns { order: 3; margin-bottom: 4px; }
+  .touchpoint > details.grip, .touchpoint > .specwrap { order: 4; }
+  details.panel > summary .hint { display: none; }
+  details.panel > summary h2 { white-space: nowrap; }
+  table.rows.pt .bar { display: none; }
+  .fabbtn { width: 38px; height: 38px; }
+  .fabbtn.gear { font-size: 1.4rem; }
+  .cathead { gap: 8px 16px; }
+}
+
+/* Finger: Eingaben, Knöpfe und Regler mit genug Fläche (iPhone, iPad) */
+@media (max-width: 600px), (pointer: coarse) {
+  input[type="text"], input[type="number"], select { min-height: 40px; padding: 6px 8px; }
+  input[type="range"] { height: 36px; }
+  input[type="checkbox"] { width: 22px; height: 22px; }
+  button.play { min-height: 40px; }
+  button.play.small, button.play.take { min-height: 36px; }
+  .controls td { padding-block: 3px; }
+}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Piano Multiphonic Calculator</h1>
+    <p>Developed version of Caspar Johannes Walter’s
+      <a href="https://www.casparjohanneswalter.de/research/piano_multiphonic_calculator">Piano Multiphonic Calculator</a>,
+      integrating Juhani T. Vesikkala’s research on grand piano multiphonics (2016).
+      Published with kind permission of <a href="https://www.casparjohanneswalter.de">Caspar Johannes Walter</a>.
+      His original remains the tool for finding multiphonics: it computes them itself, reaches any
+      point in any complexity and finds the point for two given partials.</p>
+    <details class="cite">
+      <summary>Sources</summary>
+      <p>Walter, C. J. (n.d.). <i>Piano multiphonic calculator</i> [Web application].
+        https://www.casparjohanneswalter.de/research/piano_multiphonic_calculator</p>
+      <p>Vesikkala, J. T. (2016). <i>Multiphonics of the grand piano – Timbral composition and performance
+        with flageolets</i>. Sibelius Academy.</p>
+    </details>
+  </header>
+
+  <div class="fab">
+    <button type="button" id="expBtn" class="fabbtn" aria-haspopup="dialog" aria-controls="expPanel" title="Export" aria-label="Export">
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 3v11m0 0-4.5-4.5M12 14l4.5-4.5M4 15v4.5h16V15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <button type="button" id="setBtn" class="fabbtn gear" aria-haspopup="dialog" aria-controls="setPanel" title="Settings" aria-label="Settings">⚙</button>
+  </div>
+
+  <div class="workspace">
+  <div class="left">
+  <section class="panel stringpanel" aria-label="String">
+    <h2>Nodes on the first half of the string</h2>
+    <div class="strbar" aria-label="Strings">
+      <div id="chips" class="chips"></div>
+      <div class="strinputs">
+        <select id="tone" aria-label="String"></select>
+        <input id="oct" type="number" min="0" max="8" aria-label="Octave" title="Octave">
+        <span class="hint"><span id="freq" class="freq"></span> Hz</span>
+        <button type="button" id="removeString" class="chipx" title="Remove this string" aria-label="Remove this string">×</button>
+      </div>
+    </div>
+    <div class="legend"><span class="hint">Tap a number k/n: flageolet (partial n and its multiples). Tap a ○ on the string: multiphonic of that node, taken into the active string. Long press: all strings.</span>
+      <label class="check"><input id="mech" type="checkbox"> Damper and hammer (approximate)</label></div>
+    <div id="ptsum" class="ptsum"></div>
+    <div class="stringscroll">
+      <div id="strwrap" class="strwrap">
+        <div id="string"></div>
+        <div id="ptstrip" class="ptstrip"></div>
+      </div>
+    </div>
+    <div id="pointer" class="pointer"></div>
+    <div class="tpwrap">
+      <h3 class="tphead">Touch point
+        <span class="tpnode">from partials <input id="p1" type="text" inputmode="numeric" aria-label="Partial 1"> · <input id="p2" type="text" inputmode="numeric" aria-label="Partial 2"></span>
+        <span id="err" class="err"></span></h3>
+      <div id="touchpoint" class="touchpoint"></div>
+    </div>
+  </section>
+
+  <details class="panel tablepanel" id="tablePanel" open>
+    <summary title="Tap to hide or show the table"><h2>Partials of the active string</h2></summary>
+    <div id="result"></div>
+  </details>
+  </div>
+
+  <details class="panel catalog" id="catPanel" aria-label="Catalogue" open>
+    <summary title="Tap to hide or show the catalogue"><h2>Catalogue · <span id="catTitle"></span></h2> <span class="hint">all nodes of one string (Vesikkala 2016, Appendix 3)</span></summary>
+    <div class="cathead">
+      <label>String
+        <select id="catSource"><option value="own">own</option><option value="active">like active</option></select>
+        <select id="catTone"></select>
+        <input id="catOct" type="number" min="0" max="8" aria-label="Octave">
+        <span id="catFreq" class="num"></span> Hz
+      </label>
+      <label for="catNmax">Up to partial <input id="catNmax" type="range" min="8" max="40" step="1"> <span id="catNmaxOut" class="num"></span></label>
+      <label for="catSort">Sort <select id="catSort"></select></label>
+      <label for="catMax">Only up to partial <input id="catMax" type="text" inputmode="numeric" placeholder="all"></label>
+      <label for="catSearch">With partials <input id="catSearch" type="text" inputmode="numeric" placeholder="e.g. 7 10"></label>
+      <span id="catCount"></span>
+    </div>
+    <div id="catalog" class="tablewrap"></div>
+    <p class="hint">Tap a row to take the node (string, octave, the two partials) into the active string. Strike plays the node with piano synthesis
+      (with “Audible only”: only the partials of the group that sound at the node; the notation shows them).
+      Partials: the upper three or four of the group, hover for all. Vesikkala stops at 19 by assumption.</p>
+  </details>
+  </div>
+
+  <div id="setBackdrop" class="backdrop" hidden></div>
+  <section class="panel settings overlay" id="setPanel" role="dialog" aria-label="Settings" hidden>
+    <div class="ovhead"><h2>Settings</h2><button type="button" id="setClose" class="chipx" aria-label="Close settings">×</button></div>
+    <div class="controls">
+    <table>
+      <tbody>
+        <tr><th>Master Volume</th><td><input id="master" type="range" min="0" max="0.25" step="0.001"></td><td class="num"><span id="masterOut"></span>
+          <button type="button" id="testHold" class="play small all" data-all="active" title="Hold the sounding partials of the active string while you set the volume">Test</button></td></tr>
+        <tr><th>Concert Pitch</th><td><input id="concert" type="text" inputmode="decimal"></td><td class="num">Hz</td></tr>
+        <tr><th>Nodes up to partial</th><td><input id="nmax" type="range" min="8" max="40" step="1"></td><td id="nmaxOut" class="num"></td></tr>
+        <tr><th><label for="tol">Node tolerance</label></th><td><input id="tol" type="range" min="0.05" max="0.3" step="0.01"></td><td id="tolOut" class="num"></td></tr>
+        <tr><th>Audible only</th><td colspan="2"><label class="check filt"><input id="filter" type="checkbox"> Play All, Strike and Export use only partials that sound at the touch point</label></td></tr>
+        <tr><th>Sound</th><td colspan="2"><span id="audioState" class="audiostate"></span></td></tr>
+        <tr class="models"><th><label for="model">Grand piano</label></th><td colspan="2">
+          <select id="model"></select>
+          <button type="button" id="modelAdd" class="play small">Add model</button>
+          <button type="button" id="modelEdit" class="play small" hidden>Edit</button>
+          <button type="button" id="modelDelete" class="play small" hidden>Delete</button>
+          <div id="modelInfo" class="hint"></div>
+          <form id="modelForm" class="modelform" hidden>
+            <input id="modelName" type="text" placeholder="Name (e.g. Steinway D, hall)" autocomplete="off">
+            <textarea id="modelStrings" placeholder="String lengths in cm, one string per line, e.g.
+A0 141
+C#1 125.5"></textarea>
+            <div class="row">
+              <button type="submit" class="play small">Save</button>
+              <button type="button" id="modelCancel" class="play small">Cancel</button>
+              <button type="button" id="modelCopy" class="play small" data-copy="modelJson">Copy JSON</button>
+              <button type="button" id="modelPaste" class="play small">Import JSON</button>
+            </div>
+            <input id="modelJson" type="text" readonly hidden>
+            <div id="modelErr" class="err"></div>
+          </form>
+        </td></tr>
+      </tbody>
+    </table>
+    <table class="piano">
+      <tbody>
+        <tr><th colspan="3" class="colhead">Strike <span class="hint">(piano synthesis, all partials at once)</span>
+          <button type="button" id="testStrike" class="play small strike" data-strike="active" title="Strike the active string with these settings">Test strike</button></th></tr>
+        <tr><th><label for="decay">Decay</label></th><td><input id="decay" type="range" min="0.25" max="4" step="0.05"></td><td id="decayOut" class="num"></td></tr>
+        <tr><th><label for="tilt">Damping of high partials</label></th><td><input id="tilt" type="range" min="0" max="1.5" step="0.05"></td><td id="tiltOut" class="num"></td></tr>
+        <tr><th><label for="inharm">Inharmonicity B</label></th><td><input id="inharm" type="range" min="0" max="0.001" step="0.00001"></td><td id="inharmOut" class="num"></td></tr>
+      </tbody>
+    </table>
+    </div>
+  </section>
+
+  <section class="panel export overlay" id="expPanel" role="dialog" aria-label="Export" hidden>
+    <div class="ovhead"><h2>Export</h2><button type="button" id="expClose" class="chipx" aria-label="Close export">×</button></div>
+    <div class="exphead">
+      <label for="expFormat">Format</label>
+      <select id="expFormat"></select>
+      <span id="expHint" class="hint">Values separated by spaces, ascending, 2 decimals. Paste into bach, a score or a spreadsheet.</span>
+    </div>
+    <div id="expRows"></div>
+    <div class="exprow"><span class="explabel">All</span><input id="expAll" type="text" readonly><button type="button" class="play copy" data-copy="expAll">Copy</button></div>
+    <h3 class="exph3">MusicXML</h3>
+    <p class="hint">All strings, one bar each: the sounding partials as a chord (with “Audible only” off: all partials), grand staff, quarter-tone arrows and exact alter values. Opens in Dorico, Sibelius, MuseScore, Finale.</p>
+    <div class="exprow">
+      <button type="button" id="xmlSave" class="play">Download .musicxml</button>
+      <button type="button" class="play copy" data-copy="expXml">Copy XML</button>
+      <span id="xmlStatus" class="hint"></span>
+    </div>
+    <textarea id="expXml" class="xmlbox" readonly hidden></textarea>
+    <h3 class="exph3">String graphic</h3>
+    <p class="hint">The graphic with all nodes up to “Nodes up to partial” (Settings) as it is shown: strings, touch points, free point, damper/hammer. Print colours on white, vector file in any size (Illustrator, Inkscape, Affinity, browser).</p>
+    <div class="exprow">
+      <button type="button" id="svgSave" class="play">Download .svg</button>
+      <span id="svgStatus" class="hint"></span>
+    </div>
+  </section>
+
+  <footer>Calculation after <a href="https://www.casparjohanneswalter.de/research/piano_multiphonic_calculator">Caspar Johannes Walter</a>.
+    Music symbols: <a href="https://github.com/steinbergmedia/bravura">Bravura</a> (Steinberg, SIL Open Font License 1.1).
+    <a href="https://github.com/michaseidenberg/piano-multiphonic-calculator">Source code and formulas</a> (MIT License).</footer>
+</main>
+<script src="js/multiphonic.js"></script>
+<script src="js/glyphs.js"></script>
+<script src="js/notation.js"></script>
+<script src="js/stringview.js"></script>
+<script src="js/piano.js"></script>
+<script src="js/catalog.js"></script>
+<script src="js/vesikkala.js"></script>
+<script src="js/models.js"></script>
+<script src="js/export.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
