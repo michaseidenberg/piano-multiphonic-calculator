@@ -396,12 +396,16 @@
     var left = SP * 4.5;
     var ch = drawChord(notes, left + SP, layout);
     var w = left + SP + ch.width + SP * 1.5;
+    // längere Beschriftung („Likely sounding“): System so breit wie nötig, Text im System halten
+    var textW = label ? label.length * 5.6 : 0;
+    w = Math.max(w, textW + 2);
     var h = layout.height;
     var body = layout.lines(0, w);
     body += '<line x1="' + fmt(w - 0.5) + '" x2="' + fmt(w - 0.5) + '" y1="' + layout.top + '" y2="' + layout.bottom + '" stroke="currentColor" stroke-width="1"/>';
     body += ch.body;
     if (label) {
-      body += '<text x="' + fmt(ch.heads + 4.7) + '" y="' + fmt(SP * 1.6) + '" text-anchor="middle" font-size="10" fill="currentColor">' + label + "</text>";
+      var cx = Math.max(textW / 2 + 1, Math.min(ch.heads + 4.7, w - textW / 2 - 1));
+      body += '<text x="' + fmt(cx) + '" y="' + fmt(SP * 1.6) + '" text-anchor="middle" font-size="10" fill="currentColor">' + label + "</text>";
     }
     return svgWrap(w, h, body, "notation chord");
   }

@@ -147,10 +147,13 @@
       state.tolerance = parseFloat(e.target.value);
       update();
     });
-    $("filter").checked = state.filter;
-    $("filter").addEventListener("change", function (e) {
-      state.filter = e.target.checked;
-      update();
+    // Partials: „Likely sounding“ (state.filter, Vesikkala) oder „Walter’s chain“ (alle, wie im Original)
+    $(state.filter ? "setLikely" : "setChain").checked = true;
+    document.querySelectorAll('input[name="partset"]').forEach(function (el) {
+      el.addEventListener("change", function (e) {
+        state.filter = e.target.value === "likely";
+        update();
+      });
     });
     // Auswahl der Saite des freien Zeigers steht in der aufklappbaren Liste (neu gezeichnet)
     $("pointer").addEventListener("change", function (e) {
@@ -402,7 +405,7 @@
     var model = currentModel();
     var len = PMModels.lengthFor(model, str.tone, str.octave);
     var v = PMVesikkala.info(r.result, r.rows[0].cents, len);
-    // klingende Teiltöne (Häkchen „Audible only“), sonst alle; Kurzform wie im Katalog
+    // wahrscheinlich klingende Teiltöne („Likely sounding“), sonst Walters Kette; Kurzform wie im Katalog
     var partials = r.audibleRows.map(function (row) {
       return row.partial;
     });
@@ -432,7 +435,7 @@
     $("touchpoint").innerHTML =
       head +
       '<div class="tpline">Finger at <b>' + last.numerator + "/" + last.denominator + "</b> = " + v.percent.toFixed(1) + " % of the string (" + v.mirrorPercent.toFixed(1) + " % from the other end)</div>" +
-      '<div class="tpline">' + (state.filter ? "Sounding partials" : "Partials (Audible only is off)") + ": <b>" + (partials.join(" ") || "–") + "</b> · " +
+      '<div class="tpline">' + (state.filter ? "Likely sounding" : "Walter’s chain") + ": <b>" + (partials.join(" ") || "–") + "</b> · " +
       '<span class="vline" title="' + esc(PMVesikkala.line(str.tone, str.octave, r.result, partials)) + '">' + esc(line) + "</span></div>" +
       grip +
       '<div class="specwrap"><div class="specscroll">' + spectrum + "</div>" + chord + "</div>" +
@@ -457,7 +460,12 @@
   }
 
   function chordLabel() {
-    return state.filter ? "Audible" : "Chord";
+    return state.filter ? "Likely sounding" : "Walter’s chain";
+  }
+
+  // Dateiname des Akkords
+  function chordSuffix() {
+    return state.filter ? "likely-sounding" : "chain";
   }
 
   // die klingenden Teiltöne der Saite i als Akkord ("" ohne Töne)
@@ -489,7 +497,7 @@
    * - Zahl k/n antippen = Flageolett: Teilton n und seine Vielfachen bis „Nodes up to partial“
    *   (alle haben bei k/n genau einen Knoten), gleich gewichtet.
    * - Kreis ○ auf der Saitenlinie antippen = Multiphonic des Katalogknotens: Teiltongruppe
-   *   (PMCatalog.group) wie Strike im Katalog, mit „Audible only“ nur die dort klingenden,
+   *   (PMCatalog.group) wie Strike im Katalog, mit „Likely sounding“ nur die dort klingenden,
    *   gewichtet nach Genauigkeit.
    */
   function flageoletList(k, n) {
@@ -769,7 +777,7 @@
     return "cat:" + e.k + "/" + e.n;
   }
 
-  // Teiltöne einer Katalogzeile, die Strike spielt: mit „Audible only“ nur die am Knoten
+  // Teiltöne einer Katalogzeile, die Strike spielt: mit „Likely sounding“ nur die am Knoten
   // klingenden (gewichtet wie in One/Two), sonst die ganze Gruppe.
   function catStrikeRows(e) {
     return e.rows
@@ -1554,7 +1562,7 @@
       if (!results[i].rows.length) return;
       if (what === "partials" || what === "zip") files.push({ name: dlName(i) + "_partials.svg", data: PMSvgFile.notationFile(spectrumFor(i)) });
       var chord = chordFor(i);
-      if (chord && (what === "audible" || what === "zip")) files.push({ name: dlName(i) + "_" + chordLabel().toLowerCase() + ".svg", data: PMSvgFile.notationFile(chord) });
+      if (chord && (what === "audible" || what === "zip")) files.push({ name: dlName(i) + "_" + chordSuffix() + ".svg", data: PMSvgFile.notationFile(chord) });
     });
     if ((what === "catalogue" || what === "zip") && catShown.list.length) files.push(catalogueFile());
     if (!files.length) return svgStatus("Nothing to download.");
@@ -1581,7 +1589,7 @@
   function catalogueFile() {
     var name = PMVesikkala.fundamentName(catShown.tone, catShown.octave);
     var title = "Catalogue · " + name + " · " + catShown.freq.toFixed(2) + " Hz · nodes up to partial " + state.catalog.nMax +
-      (state.filter ? " · chords: audible partials" : "");
+      (state.filter ? " · chords: likely sounding partials" : " · chords: all partials of the group");
     var rows = catShown.list.map(function (e) {
       var shown = e.rows.slice(e.rows.length - e.shown.length);
       return {

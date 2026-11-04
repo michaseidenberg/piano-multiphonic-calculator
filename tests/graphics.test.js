@@ -121,3 +121,13 @@ test("Saitengrafik als eigenständige SVG-Datei", () => {
   assert.match(svg, /<circle fill="#ffffff" cx=/);
   assert.equal((svg.match(/class="nodebtn"/g) || []).length, (live.match(/class="nodebtn"/g) || []).length);
 });
+
+test("Lange Akkord-Beschriftung bleibt im System", () => {
+  for (const label of ["Likely sounding", "Walter’s chain"]) {
+    const svg = N.chordSVG([{ cents: 4800 }], label);
+    const w = +svg.match(/viewBox="0 0 ([\d.]+)/)[1];
+    const x = +svg.match(/<text x="([\d.]+)"[^>]*>[^<]*<\/text><\/svg>$/)[1];
+    const half = (label.length * 5.6) / 2;
+    assert.ok(x - half >= 0 && x + half <= w, label + ": " + x + " ± " + half + " in " + w);
+  }
+});

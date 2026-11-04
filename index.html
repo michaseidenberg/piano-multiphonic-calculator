@@ -228,6 +228,12 @@ th.btns { white-space: nowrap; text-align: right !important; }
 th.btns button + button { margin-left: 6px; }
 .hint { font-weight: 400; color: var(--muted); font-size: 0.8rem; }
 footer { color: var(--muted); font-size: 0.8rem; }
+.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+.seg label { display: inline-flex; align-items: center; padding: 4px 10px; cursor: pointer; font-size: 0.9rem; white-space: nowrap; }
+.seg label + label { border-left: 1px solid var(--rule); }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg label:has(input:checked) { background: var(--ink); color: var(--paper); }
+.seg label:has(input:focus-visible) { outline: 2px solid var(--two); outline-offset: -2px; }
 /* kleine Download-Knöpfe an den Grafiken */
 button.dl { font: 600 0.75rem var(--font-body); color: var(--muted); background: var(--paper); border: 1px solid var(--rule);
   border-radius: 4px; padding: 2px 8px; cursor: pointer; white-space: nowrap; }
@@ -416,6 +422,9 @@ button.play.take.active { background: var(--c); }
         https://www.casparjohanneswalter.de/research/piano_multiphonic_calculator</p>
       <p>Vesikkala, J. T. (2016). <i>Multiphonics of the grand piano – Timbral composition and performance
         with flageolets</i>. Sibelius Academy.</p>
+      <p>Torres, R., &amp; Ferreira-Lopes, P. (2012). Multiphonics as a compositional element in writing for amplified
+        guitar (1). <i>Emille</i>, 10, 55–66. Part (2): <i>Journal of Science and Technology of the Arts</i>, 4(1), 61–69.
+        (Node tolerance ±10 %, cited after Vesikkala 2016.)</p>
     </details>
   </header>
 
@@ -481,7 +490,7 @@ button.play.take.active { background: var(--c); }
     </div>
     <div id="catalog" class="tablewrap"></div>
     <p class="hint">Tap a row to take the node (string, octave, the two partials) into the active string. Strike plays the node with piano synthesis
-      (with “Audible only”: only the partials of the group that sound at the node; the notation shows them).
+      (with “Likely sounding”: only the partials of the group that likely sound at the node; the notation shows them).
       Partials: the upper three or four of the group, hover for all. Vesikkala stops at 19 by assumption.</p>
   </details>
   </div>
@@ -500,12 +509,16 @@ button.play.take.active { background: var(--c); }
         <tr><td colspan="3"><details class="grip tolhelp"><summary>What does the node tolerance mean?</summary>
           <p>A partial sounds when the finger is close enough to one of its nodes. The tolerance says how close:
             0.20 means up to ±10 % of the partial’s cycle away from the node (accuracy ≥ 0.80 in the table; Vesikkala 2016, ch. 2.3).</p>
-          <p>The sources differ: Vesikkala’s formula ±5 % (0.10), Torres &amp; Ferreira-Lopes 2012 ±10 % (0.20, the default),
+          <p>The sources differ: Vesikkala’s formula ±5 % (0.10), Torres &amp; Ferreira-Lopes 2012, for the guitar, ±10 % (0.20, the default),
             Vesikkala’s empirical estimate 15–20 % (0.30–0.40). His catalogue (Appendix 3) lists the upper three partials of a node;
             0.20 matches it from partial 10 upwards, lower nodes need more (2/9: 0.23, 2/7: 0.29).</p>
           <p>A model, not a measurement: finger width, pressure, register and the hammer all play a part. Compare with Strike and trust your ear at the piano.</p>
         </details></td></tr>
-        <tr><th>Audible only</th><td colspan="2"><label class="check filt"><input id="filter" type="checkbox"> Play All, Strike and Export use only partials that sound at the touch point</label></td></tr>
+        <tr><th>Partials</th><td colspan="2"><div class="seg" role="radiogroup" aria-label="Partials">
+          <label><input type="radio" name="partset" id="setLikely" value="likely"> Likely sounding</label>
+          <label><input type="radio" name="partset" id="setChain" value="chain"> Walter’s chain</label></div>
+          <div class="hint">Likely sounding: partials with a node within the node tolerance of the finger (model after Vesikkala 2016, not a measurement).
+            Walter’s chain: all partials of the calculation, as in the original. Applies to Play All, Strike, notation and export.</div></td></tr>
         <tr><th>Sound</th><td colspan="2"><span id="audioState" class="audiostate"></span></td></tr>
         <tr class="models"><th><label for="model">Grand piano</label></th><td colspan="2">
           <select id="model"></select>
@@ -552,7 +565,7 @@ C#1 125.5"></textarea>
     <div id="expRows"></div>
     <div class="exprow"><span class="explabel">All</span><input id="expAll" type="text" readonly><button type="button" class="play copy" data-copy="expAll">Copy</button></div>
     <h3 class="exph3">MusicXML</h3>
-    <p class="hint">All strings, one bar each: the sounding partials as a chord (with “Audible only” off: all partials), grand staff, quarter-tone arrows and exact alter values. Opens in Dorico, Sibelius, MuseScore, Finale.</p>
+    <p class="hint">All strings, one bar each: the likely sounding partials as a chord (with “Walter’s chain”: all partials), grand staff, quarter-tone arrows and exact alter values. Opens in Dorico, Sibelius, MuseScore, Finale.</p>
     <div class="exprow">
       <button type="button" id="xmlSave" class="play">Download .musicxml</button>
       <button type="button" class="play copy" data-copy="expXml">Copy XML</button>
@@ -563,7 +576,7 @@ C#1 125.5"></textarea>
     <p class="hint">SVG in print colours on white, any size (Illustrator, Inkscape, Affinity, browser).
       Names: string, sounding partials, touch point, e.g. <code>C1_4-7-11_at_3-11_partials.svg</code>.
       String graphic: nodes up to “Nodes up to partial” (Settings), touch points, free point, damper/hammer.
-      Partials: all partials, the sounding ones in colour. Catalogue: as shown (sort, filters), with chords.
+      Partials: all partials, the likely sounding ones in colour. Chord: likely sounding or Walter’s chain (Settings). Catalogue: as shown (sort, filters), with chords.
       Several files come as .zip.</p>
     <div class="exprow dlbtns">
       <label for="dlScope">Strings</label>
@@ -572,7 +585,7 @@ C#1 125.5"></textarea>
     <div class="exprow dlbtns">
       <button type="button" class="play" data-dl="string">String graphic</button>
       <button type="button" class="play" data-dl="partials">Partials</button>
-      <button type="button" class="play" data-dl="audible">Audible</button>
+      <button type="button" class="play" data-dl="audible">Chord</button>
       <button type="button" class="play" data-dl="catalogue">Catalogue</button>
       <button type="button" class="play copy" data-dl="zip">All as .zip</button>
     </div>

@@ -91,8 +91,8 @@ Steht kein Vorzeichen, aber ein Pfeil, wird ♮ mit Pfeil gesetzt. Hohe und tief
 nebeneinander, mit der Cent-Abweichung wie in der Spalte „Note“.
 
 **Akkord (Erweiterung):** Rechts neben dem Doppelsystem (bei zu wenig Platz darunter) stehen die
-klingenden Teiltöne als Akkord in einem eigenen kleinen Doppelsystem, Beschriftung „Audible“
-(bei ausgeschaltetem Häkchen „Audible only“ alle Teiltöne, Beschriftung „Chord“). Gleich
+klingenden Teiltöne als Akkord in einem eigenen kleinen Doppelsystem, Beschriftung „Likely sounding“
+(mit „Walter’s chain“ alle Teiltöne, Beschriftung „Walter’s chain“, sonst „Likely sounding“). Gleich
 geschriebene Töne erscheinen einmal. Sekunden und Töne auf derselben Stufe: der obere Kopf steht
 rechts daneben. Vorzeichen stehen in Spalten nach links, von oben nach unten jeweils in der
 ersten Spalte, in der sie kein anderes Vorzeichen überdecken (Höhe aus den Glyphenpfaden).
@@ -170,7 +170,7 @@ und „With partials“ (alle genannten Teiltöne müssen in der Gruppe vorkomme
 der Zeile steht).
 
 **Strike.** Jede Zeile lässt sich direkt anschlagen (Klavier-Synthese wie Abschnitt 6) mit den
-Teiltönen der Gruppe. Mit „Audible only“ klingen nur die, deren Genauigkeit am Knoten k/n über
+Teiltönen der Gruppe. Mit „Likely sounding“ klingen nur die, deren Genauigkeit am Knoten k/n über
 der Schwelle liegt, gewichtet wie bei Strike der Saite (Abschnitt 10); ohne das Häkchen die ganze Gruppe.
 Ein neuer Anschlag im Katalog beendet den vorigen.
 
@@ -227,7 +227,8 @@ hat `acc = 1`, die beiden darunter `acc = 1 − 2/n` (benachbarte Farey-Brüche)
 
 **Toleranz.** `acc ≥ 1 − tol` heißt: Abstand zum Knoten höchstens `tol/2` des Zyklus. Vesikkala
 gibt drei verschiedene Werte: seine Formel mit Schwelle 0.9 (±5 % des Zyklus, `tol` 0.10),
-Torres & Ferreira-Lopes (2012) ±10 % (`tol` 0.20), empirisch 15–20 % (`tol` 0.30–0.40). Darum ist
+Torres & Ferreira-Lopes (2012, zur Gitarre; *Emille* 10 bzw. *JSTA* 4(1), welcher Teil, ist
+bei Vesikkala nachzusehen) ±10 % (`tol` 0.20), empirisch 15–20 % (`tol` 0.30–0.40). Darum ist
 `tol` ein Regler „Node tolerance“ (0.05 … 0.40, Anzeige „0.20 · ±10 % of cycle“, mit Erklärung
 in den Settings). Default 0.20 = Torres & Ferreira-Lopes (bis 2026-11-04 stand hier irrtümlich
 „der obere empirische Wert“, und die Anzeige zeigte ±20 %): damit klingen die
@@ -244,10 +245,10 @@ Abstände 0.79 % und 0.84 % durch 28.57 (Knotenlage) statt durch 14.29 (Zyklus);
 0.38 %) → 0.857. `tests/vesikkala.test.js` prüft diese Werte.
 
 **In der Tabelle der aktiven Saite.** Jede Zeile zeigt `acc` („Acc.“); Zeilen unter der Schwelle sind grau
-(gedämpft). Mit dem Häkchen „Audible only“ (Default an) verwenden Play All, Strike und der Export
+(gedämpft). Mit der Wahl „Partials: Likely sounding“ (Default; vorher Häkchen „Audible only“) verwenden Play All, Strike und der Export
 nur die klingenden Zeilen; „Play“ je Zeile bleibt wie im Original. Strike gewichtet die
 Lautstärke mit `0.5 + 0.5 · (acc − (1 − tol)) / tol` (0.5 an der Schwelle, 1 auf dem Knoten,
-eigene Annahme), als Faktor vor der Normierung aus Abschnitt 6. Häkchen aus → alles wie vorher.
+eigene Annahme), als Faktor vor der Normierung aus Abschnitt 6. „Walter’s chain“ → alles wie im Original.
 
 **Zeiger („Free point“).** Auf der Saitengrafik lässt sich ein Punkt setzen und ziehen (Maus und
 Touch), auch an der Leiste unter dem Zeigerdreieck. Die Leiste wandert mit und hat „Strike“,
@@ -275,7 +276,7 @@ Saiten; die Eingaben ändern sich nicht.
 - **Kreis ○ auf der Saitenlinie = Multiphonic** (übernimmt den Knoten zugleich in die aktive
   Saite, Partial 1 = n, Partial 2 = b wie im Katalog): die Katalogknoten (Abschnitt 8, bis zum N des
   Katalogs), deren Teiltongruppe am Knoten mindestens zwei klingende Teiltöne hat (bei N = 19 und
-  Toleranz ±20 % sind es 46 von 60). Klang wie Strike im Katalog: die Gruppe, mit „Audible only“
+  Toleranz 0.20 = ±10 % sind es 46 von 60). Klang wie Strike im Katalog: die Gruppe, mit „Likely sounding“
   nur die klingenden, gewichtet nach Abschnitt 10 (5/19 → 4, 15, 19).
 (Michas Wunsch, 3. Oktober 2026: Flageoletts und Multiphonics unterscheiden; vorher spielte die
 Zahl ab n ≥ 10 wegen der Toleranz meist einen Multiphonic.)
@@ -295,8 +296,8 @@ Basssystem mit „15“ (klingt zwei Oktaven tiefer). Diese Töne bekommen keine
 auch im „15“-System nicht passt, wird zusätzlich oktaviert. Vorbild: bach.roll (Schlüssel „FFGG“).
 Die Einzelnote je Tabellenzeile bleibt ein einzelnes System mit 8va/8vb.
 
-**MusicXML.** Ein Takt je Saite, ganze Noten als Akkord der klingenden Teiltöne (ohne „Audible
-only“: alle), Violin- und Bassschlüssel (Stufe ≥ C4 oben), darüber die Spielangabe als Text.
+**MusicXML.** Ein Takt je Saite, ganze Noten als Akkord der klingenden Teiltöne (mit „Walter’s
+chain“: alle), Violin- und Bassschlüssel (Stufe ≥ C4 oben), darüber die Spielangabe als Text.
 Tonhöhe: Stammton und Oktave wie in der Notation (nächster Halbton, 72er-Stufe),
 `alter = (Cent − Cent des Stammtons) / 100`, auf 2 Nachkommastellen; Vorzeichen ♭/♮/♯ mit 1 Pfeil
 als `flat-down` usw., mit 2–3 Pfeilen als `other` mit SMuFL-Namen (`accidentalSharpThreeArrowsDown`).
