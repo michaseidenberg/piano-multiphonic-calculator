@@ -40,6 +40,9 @@ The formulas, the original and the extensions, are described in
   <https://www.casparjohanneswalter.de/research/piano_multiphonic_calculator>
 - Vesikkala, J. T. (2016). *Multiphonics of the grand piano – Timbral composition and performance
   with flageolets*. Sibelius Academy.
+- Torres, R., & Ferreira-Lopes, P. (2012). Multiphonics as a compositional element in writing for
+  amplified guitar (1). *Emille*, 10, 55–66. Part (2): *Journal of Science and Technology of the
+  Arts*, 4(1), 61–69. Node tolerance ±10 %, cited after Vesikkala 2016.
 
 ## License
 
