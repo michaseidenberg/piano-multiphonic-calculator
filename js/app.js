@@ -988,7 +988,9 @@
     });
     $("masterOut").textContent = Math.round((state.master / 0.25) * 100) + "%";
     $("nmaxOut").textContent = state.nMax;
-    $("tolOut").textContent = "±" + Math.round(state.tolerance * 100) + " % of cycle";
+    // acc ≥ 1 − tol heißt: Abstand zum Knoten höchstens tol/2 des Zyklus
+    var half = Math.round(state.tolerance * 1000) / 20;
+    $("tolOut").textContent = state.tolerance.toFixed(2) + " · ±" + half + " % of cycle";
 
     var ra = results[state.active];
     $("freq").textContent = ra.freq.toFixed(2);
@@ -1156,7 +1158,7 @@
       (chord ? '<div class="ptchord">' + chord + "</div>" : "") +
       '<div class="pttext">' +
       '<div class="ptline">Free point <b>' + (d * 100).toFixed(1) + " %</b> (" + d.toFixed(4) + ")</div>" +
-      '<div class="ptline" title="What the finger at this point lets through (tolerance ±' + Math.round(state.tolerance * 100) +
+      '<div class="ptline" title="What the finger at this point lets through (tolerance ±' + Math.round(state.tolerance * 1000) / 20 +
       ' % of the cycle)">Sounding here: <b>' + (list || "–") + "</b></div>" +
       '<div class="ptline" title="Walter’s chain is the multiphonic group of the node; at the exact node only part of it sounds">Nearest multiphonic node <b>' +
       near.k + "/" + near.n + "</b> = " + (near.pos * 100).toFixed(1) + " %, Walter’s chain " + esc(PMCatalog.groupText(near.shown)) + "</div>" +

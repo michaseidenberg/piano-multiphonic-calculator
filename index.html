@@ -321,6 +321,8 @@ button.play.take0 { background: var(--one); }
 button.play.take1 { background: var(--two); }
 details.grip { margin-top: 4px; font-size: 0.9rem; color: var(--muted); }
 details.grip summary { cursor: pointer; }
+.tolhelp { max-width: 34em; }
+.tolhelp p { margin: 6px 0 0; }
 .grip table { border-collapse: collapse; margin-top: 4px; }
 .grip th { text-align: left; font-weight: 500; color: var(--muted); padding: 2px 12px 2px 0; font-size: 0.85rem; }
 .grip td { padding: 2px 12px 2px 0; color: var(--ink); font-family: var(--font-num); white-space: nowrap; }
@@ -494,7 +496,15 @@ button.play.take.active { background: var(--c); }
           <button type="button" id="testHold" class="play small all" data-all="active" title="Hold the sounding partials of the active string while you set the volume">Test</button></td></tr>
         <tr><th>Concert Pitch</th><td><input id="concert" type="text" inputmode="decimal"></td><td class="num">Hz</td></tr>
         <tr><th>Nodes up to partial</th><td><input id="nmax" type="range" min="8" max="40" step="1"></td><td id="nmaxOut" class="num"></td></tr>
-        <tr><th><label for="tol">Node tolerance</label></th><td><input id="tol" type="range" min="0.05" max="0.3" step="0.01"></td><td id="tolOut" class="num"></td></tr>
+        <tr><th><label for="tol">Node tolerance</label></th><td><input id="tol" type="range" min="0.05" max="0.4" step="0.01"></td><td id="tolOut" class="num"></td></tr>
+        <tr><td colspan="3"><details class="grip tolhelp"><summary>What does the node tolerance mean?</summary>
+          <p>A partial sounds when the finger is close enough to one of its nodes. The tolerance says how close:
+            0.20 means up to ±10 % of the partial’s cycle away from the node (accuracy ≥ 0.80 in the table; Vesikkala 2016, ch. 2.3).</p>
+          <p>The sources differ: Vesikkala’s formula ±5 % (0.10), Torres &amp; Ferreira-Lopes 2012 ±10 % (0.20, the default),
+            Vesikkala’s empirical estimate 15–20 % (0.30–0.40). His catalogue (Appendix 3) lists the upper three partials of a node;
+            0.20 matches it from partial 10 upwards, lower nodes need more (2/9: 0.23, 2/7: 0.29).</p>
+          <p>A model, not a measurement: finger width, pressure, register and the hammer all play a part. Compare with Strike and trust your ear at the piano.</p>
+        </details></td></tr>
         <tr><th>Audible only</th><td colspan="2"><label class="check filt"><input id="filter" type="checkbox"> Play All, Strike and Export use only partials that sound at the touch point</label></td></tr>
         <tr><th>Sound</th><td colspan="2"><span id="audioState" class="audiostate"></span></td></tr>
         <tr class="models"><th><label for="model">Grand piano</label></th><td colspan="2">
