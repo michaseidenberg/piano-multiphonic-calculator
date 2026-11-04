@@ -229,8 +229,8 @@ hat `acc = 1`, die beiden darunter `acc = 1 − 2/n` (benachbarte Farey-Brüche)
 gibt drei verschiedene Werte: seine Formel mit Schwelle 0.9 (±5 % des Zyklus, `tol` 0.10),
 Torres & Ferreira-Lopes (2012, zur Gitarre; *Emille* 10 bzw. *JSTA* 4(1), welcher Teil, ist
 bei Vesikkala nachzusehen) ±10 % (`tol` 0.20), empirisch 15–20 % (`tol` 0.30–0.40). Darum ist
-`tol` ein Regler „Node tolerance“ (0.05 … 0.40, Anzeige „0.20 · ±10 % of cycle“, mit Erklärung
-in den Settings). Default 0.20 = Torres & Ferreira-Lopes (bis 2026-11-04 stand hier irrtümlich
+`tol` einstellbar als „Node tolerance“ (0.05 … 0.40): Zahlenfeld beim Touch point neben der Wahl
+„Likely sounding“ / „Walter’s chain“, in den Settings Regler und Zahlenfeld mit Erklärung (Knopf „?“). Default 0.20 = Torres & Ferreira-Lopes (bis 2026-11-04 stand hier irrtümlich
 „der obere empirische Wert“, und die Anzeige zeigte ±20 %): damit klingen die
 oberen drei Teiltöne der Kette ab n ≥ 10 zusammen, so wie Anhang 3 sie listet (3/11 → 11 7 4,
 4/13 → 13 10 3); für kleinere n (2/9 → 9 5 4, 2/7 → 7 4 3) braucht es 0.23 bzw. 0.29. Mit 0.10

@@ -142,10 +142,29 @@
       state.nMax = parseInt(e.target.value, 10);
       update();
     });
-    $("tol").value = state.tolerance;
+    // Node tolerance: Regler (Settings) und Zahlenfelder (Touch point, Settings), 0.05 … 0.40
     $("tol").addEventListener("input", function (e) {
       state.tolerance = parseFloat(e.target.value);
       update();
+    });
+    ["tolNum", "tolNumSet"].forEach(function (id) {
+      $(id).addEventListener("input", function (e) {
+        var v = parseFloat(String(e.target.value).replace(",", "."));
+        if (!(v >= 0.05 && v <= 0.4)) return e.target.classList.add("bad");
+        e.target.classList.remove("bad");
+        state.tolerance = Math.round(v * 100) / 100;
+        update();
+      });
+      $(id).addEventListener("change", function (e) {
+        e.target.classList.remove("bad");
+        showTolerance(true);
+      });
+    });
+    $("tolInfo").addEventListener("click", function () {
+      showOverlay("setPanel", true);
+      var help = $("setPanel").querySelector(".tolhelp");
+      help.open = true;
+      help.scrollIntoView({ block: "center" });
     });
     // Partials: „Likely sounding“ (state.filter, Vesikkala) oder „Walter’s chain“ (alle, wie im Original)
     $(state.filter ? "setLikely" : "setChain").checked = true;
@@ -448,6 +467,21 @@
       "</div>";
     strikeBothLabel();
     testLabels(allOn, struck, r.audibleRows.length > 0);
+  }
+
+  /*
+   * Node tolerance in Regler und Zahlenfeldern anzeigen. acc ≥ 1 − tol heißt: Abstand zum Knoten
+   * höchstens tol/2 des Zyklus. Ein Feld, in das gerade getippt wird, bleibt unberührt (außer all).
+   */
+  function showTolerance(all) {
+    var half = Math.round(state.tolerance * 1000) / 20;
+    var text = "±" + half + " % of cycle";
+    $("tol").value = state.tolerance;
+    ["tolNum", "tolNumSet"].forEach(function (id) {
+      if (all || document.activeElement !== $(id)) $(id).value = state.tolerance.toFixed(2);
+    });
+    $("tolOut").textContent = text;
+    $("tolNumOut").textContent = text;
   }
 
   // Doppelsystem aller Partialtöne der Saite i: klingende in ihrer Farbe, die anderen grau
@@ -996,9 +1030,7 @@
     });
     $("masterOut").textContent = Math.round((state.master / 0.25) * 100) + "%";
     $("nmaxOut").textContent = state.nMax;
-    // acc ≥ 1 − tol heißt: Abstand zum Knoten höchstens tol/2 des Zyklus
-    var half = Math.round(state.tolerance * 1000) / 20;
-    $("tolOut").textContent = state.tolerance.toFixed(2) + " · ±" + half + " % of cycle";
+    showTolerance(false);
 
     var ra = results[state.active];
     $("freq").textContent = ra.freq.toFixed(2);

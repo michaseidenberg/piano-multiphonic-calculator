@@ -228,6 +228,9 @@ th.btns { white-space: nowrap; text-align: right !important; }
 th.btns button + button { margin-left: 6px; }
 .hint { font-weight: 400; color: var(--muted); font-size: 0.8rem; }
 footer { color: var(--muted); font-size: 0.8rem; }
+.partbar { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; margin: 2px 0 8px; font-size: 0.9rem; color: var(--muted); }
+.tolfield { display: inline-flex; gap: 6px; align-items: center; white-space: nowrap; }
+#tolNum, #tolNumSet { width: 4.4em; }
 .seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
 .seg label { display: inline-flex; align-items: center; padding: 4px 10px; cursor: pointer; font-size: 0.9rem; white-space: nowrap; }
 .seg label + label { border-left: 1px solid var(--rule); }
@@ -462,6 +465,14 @@ button.play.take.active { background: var(--c); }
       <h3 class="tphead">Touch point
         <span class="tpnode">from partials <input id="p1" type="text" inputmode="numeric" aria-label="Partial 1"> · <input id="p2" type="text" inputmode="numeric" aria-label="Partial 2"></span>
         <span id="err" class="err"></span></h3>
+      <div class="partbar">
+        <div class="seg" role="radiogroup" aria-label="Partials">
+          <label title="Partials with a node within the node tolerance of the finger (model after Vesikkala 2016)"><input type="radio" name="partset" id="setLikely" value="likely"> Likely sounding</label>
+          <label title="All partials of Walter’s calculation, as in the original"><input type="radio" name="partset" id="setChain" value="chain"> Walter’s chain</label></div>
+        <label class="tolfield">Node tolerance <input id="tolNum" type="text" inputmode="decimal" aria-describedby="tolNumOut"></label>
+        <span id="tolNumOut" class="hint"></span>
+        <button type="button" id="tolInfo" class="dl" title="What do these mean? (Settings)">?</button>
+      </div>
       <div id="touchpoint" class="touchpoint"></div>
     </div>
   </section>
@@ -505,7 +516,7 @@ button.play.take.active { background: var(--c); }
           <button type="button" id="testHold" class="play small all" data-all="active" title="Hold the sounding partials of the active string while you set the volume">Test</button></td></tr>
         <tr><th>Concert Pitch</th><td><input id="concert" type="text" inputmode="decimal"></td><td class="num">Hz</td></tr>
         <tr><th>Nodes up to partial</th><td><input id="nmax" type="range" min="8" max="40" step="1"></td><td id="nmaxOut" class="num"></td></tr>
-        <tr><th><label for="tol">Node tolerance</label></th><td><input id="tol" type="range" min="0.05" max="0.4" step="0.01"></td><td id="tolOut" class="num"></td></tr>
+        <tr><th><label for="tol">Node tolerance</label></th><td><input id="tol" type="range" min="0.05" max="0.4" step="0.01"></td><td class="num"><input id="tolNumSet" type="text" inputmode="decimal" aria-label="Node tolerance"> <span id="tolOut"></span></td></tr>
         <tr><td colspan="3"><details class="grip tolhelp"><summary>What does the node tolerance mean?</summary>
           <p>A partial sounds when the finger is close enough to one of its nodes. The tolerance says how close:
             0.20 means up to ±10 % of the partial’s cycle away from the node (accuracy ≥ 0.80 in the table; Vesikkala 2016, ch. 2.3).</p>
@@ -514,10 +525,8 @@ button.play.take.active { background: var(--c); }
             0.20 matches it from partial 10 upwards, lower nodes need more (2/9: 0.23, 2/7: 0.29).</p>
           <p>A model, not a measurement: finger width, pressure, register and the hammer all play a part. Compare with Strike and trust your ear at the piano.</p>
         </details></td></tr>
-        <tr><th>Partials</th><td colspan="2"><div class="seg" role="radiogroup" aria-label="Partials">
-          <label><input type="radio" name="partset" id="setLikely" value="likely"> Likely sounding</label>
-          <label><input type="radio" name="partset" id="setChain" value="chain"> Walter’s chain</label></div>
-          <div class="hint">Likely sounding: partials with a node within the node tolerance of the finger (model after Vesikkala 2016, not a measurement).
+        <tr><th>Partials</th><td colspan="2">
+          <div class="hint">Chosen at the touch point. Likely sounding: partials with a node within the node tolerance of the finger (model after Vesikkala 2016, not a measurement).
             Walter’s chain: all partials of the calculation, as in the original. Applies to Play All, Strike, notation and export.</div></td></tr>
         <tr><th>Sound</th><td colspan="2"><span id="audioState" class="audiostate"></span></td></tr>
         <tr class="models"><th><label for="model">Grand piano</label></th><td colspan="2">
